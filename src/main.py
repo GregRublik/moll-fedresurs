@@ -91,9 +91,9 @@ if __name__ == "__main__":
         asyncio.run(
             main(count_clients)
         )
-    elif 1 > int(count_clients) > 50:
+    elif 1 > int(count_clients) > 6:
         print(f"Некорректное количество персон: {count_clients}")
-    elif int(count_clients) <= 50:
+    elif int(count_clients) <= 6:
         asyncio.run(
             main(int(count_clients))
         )

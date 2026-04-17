@@ -145,7 +145,7 @@ class BitrixContactsService(BitrixService):
                     "BIRTHDATE",
                 ],
                 "filter": {
-                    "ID": "18609",
+                    # "ID": "18609",
                     "UF_CRM_FEDRESURS_MONITORING": "1", # мониторинг в федресурсе
                     "!=NAME": "",               # только с заполненными колями
                     "!=SECOND_NAME": "",        # только с заполненными колями
