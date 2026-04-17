@@ -26,6 +26,8 @@ class FedresursSettings(BaseSettings):
 
 class BitrixSettings(BaseSettings):
     webhook_url: str
+    id_sp_message: int
+    id_sp_lot: int
 
     model_config = SettingsConfigDict(env_prefix="BITRIX_", env_file=".env", extra="ignore")
 

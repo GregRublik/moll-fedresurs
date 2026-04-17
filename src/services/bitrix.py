@@ -1,5 +1,6 @@
 from aiohttp import ClientSession
 from typing import Literal, Optional
+from datetime import datetime, timezone, timedelta
 
 from config import settings
 
@@ -34,3 +35,102 @@ class BitrixService:
         )
 
         return await response.json()
+
+class BitrixMessageService(BitrixService):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.entity_type_id = settings.bitrix.id_sp_message
+
+
+    async def create_message(self, client_id: int, message: dict):
+        response = await self.send_request(
+            "crm.item.add",
+            json={
+                "entityTypeId": self.entity_type_id,
+                "fields": {
+                    # todo client
+                    "UF_CRM_138_1744310823": message.get(""), # тип сообщения
+                    "UF_CRM_138_1744310803": message.get(""), # дата
+                    "UF_CRM_138_1744310779": message.get(""), # номер
+                    "UF_CRM_138_1744310786": message.get(""), # url
+                    "UF_CRM_138_1744310814": message.get("")# текст сообщения
+                }
+            }
+        )
+
+    async def get_message(self, message_id: int):
+        print(self.entity_type_id)
+        response = await self.send_request(
+            "crm.item.get",
+            json={
+                "entityTypeId": self.entity_type_id,
+                "id": message_id,
+                "useOriginalUfNames": "Y"
+            }
+        )
+        return response
+
+class BitrixContactsService(BitrixService):
+
+    async def get_fields(self):
+        response = await self.send_request(
+            "crm.item.fields",
+            json={
+                "entityTypeId": 3
+            }
+        )
+        return response
+
+    async def update_contact(self, client_id: int, num_activity: str, count_messages: int, ):
+
+        tz = timezone(timedelta(hours=3))
+        now = datetime.now(tz)
+
+        response = await self.send_request(
+            "crm.contact.update",
+            json={
+                "id": client_id,
+                "fields": {
+                    "UF_CRM_FEDRESURS_CHECKUP_DATETIME": now.replace(hour=0, minute=0, second=0,
+                                                                     microsecond=0).isoformat(),  #
+                    "UF_CRM_FEDRESURS_IP": num_activity,  # номер дела о банкротстве
+                    "UF_CRM_FEDRESURS_INFO": count_messages,  # количество сообщений
+                }
+            }
+        )
+        return response
+
+    async def get_contacts(self, start: Optional[int] = 0):
+        response = await self.send_request(
+            "crm.contact.list",
+            json={
+                "select": [
+                    "ID",
+                    "NAME",
+                    "SECOND_NAME",
+                    "LAST_NAME",
+                    "UF_CRM_1636582822241", # INN
+                    "UF_CRM_FEDRESURS_MONITORING",
+                    "UF_CRM_FEDRESURS_CHECKUP_DATETIME",
+                    "UF_CRM_FEDRESURS_IP",  # Номер дела о банкротстве c Федресурса
+                    "UF_CRM_FEDRESURS_INFO",  # "Количество сообщений о банкротстве с Федресурса"
+                    "BIRTHDATE",
+                ],
+                "filter": {
+                    # "ID": "18609",
+                    "UF_CRM_FEDRESURS_MONITORING": "1", # мониторинг в федресурсе
+                    "!=NAME": "",               # только с заполненными колями
+                    "!=SECOND_NAME": "",        # только с заполненными колями
+                    "!=LAST_NAME": "",          # только с заполненными колями
+                    "!=BIRTHDATE": ""           # только с заполненными колями
+                },
+                "order": {
+                    "UF_CRM_FEDRESURS_CHECKUP_DATETIME": "ASC",  # "ASC", "DESC"
+                    "BIRTHDATE": "DESC"
+                },
+                "start": start
+            }
+        )
+        return response["result"]
+

@@ -1,9 +1,19 @@
-from asyncio import sleep
-
-from depends import get_bitrix_service, get_fedresurs_service
 import asyncio
+
+
+
 from config import SessionManager
-from datetime import datetime, timezone, timedelta
+from services.bitrix import BitrixService, BitrixContactsService, BitrixMessageService
+from services.fedresurs import FedresursService
+
+from depends import (
+    get_bitrix_service,
+    get_fedresurs_service,
+    get_bitrix_contact_service,
+    get_matching_service,
+    get_message_service
+)
+from services.matching import MatchingService
 
 
 async def main(count):
@@ -11,46 +21,21 @@ async def main(count):
     session = await SessionManager.get_session()
 
     try:
-        f_service = get_fedresurs_service(session)
-        b_service = get_bitrix_service(session)
+        f_service: FedresursService = get_fedresurs_service(session)
+        c_service: BitrixContactsService = get_bitrix_contact_service(session)
+        b_service: BitrixService = get_bitrix_service(session)
+        m_service: MatchingService = get_matching_service()
+        message_service: BitrixMessageService = get_message_service(session)
 
-        clients = await b_service.send_request(
-            "crm.contact.list",
-            json={
-                "select": [
-                    "ID",
-                    "NAME",
-                    "SECOND_NAME",
-                    "LAST_NAME",
-                    "UF_CRM_FEDRESURS_MONITORING",
-                    "UF_CRM_FEDRESURS_CHECKUP_DATETIME",
-                    "UF_CRM_FEDRESURS_IP",# Номер дела о банкротстве c Федресурса
-                    "UF_CRM_FEDRESURS_INFO", # "Количество сообщений о банкротстве с Федресурса"
-                    "BIRTHDATE",
-                ],
-                "filter": {
-                    "ID": "18609",
-                    "UF_CRM_FEDRESURS_MONITORING": "1",
-                    "!=NAME": "",
-                    "!=SECOND_NAME": "",
-                    "!=LAST_NAME": "",
-                    "!=BIRTHDATE": ""
-                },
-                "order": {
-                    "UF_CRM_FEDRESURS_CHECKUP_DATETIME": "ASC", # "ASC", "DESC"
-                    "BIRTHDATE": "DESC"
-                },
-                "start": 0
-            }
-        )
+        clients = await c_service.get_contacts() # получаем 50 первых контактов
 
-        for client in clients["result"][:count]:
+        number_of_clients_processed = 0
+
+        for client in clients[:count]:
             print(client)
-            if client["BIRTHDATE"] == "":
-                print(f"У контакта {client['ID']} не заполнена дата рождения")
-                continue
-            else:
-                birthdate = datetime.fromisoformat(client["BIRTHDATE"]).date()
+
+            if number_of_clients_processed == count:
+                break
 
             f_persons = await f_service.search_person(
                 client["LAST_NAME"],
@@ -59,43 +44,29 @@ async def main(count):
             )
             # print(f_persons)
             for f_person in f_persons:
-
                 f_person_info = await f_service.get_person(f_person["id"])
                 # print(f_person_info)
 
-                dob = datetime.strptime(f_person_info["dob"], "%d.%m.%Y").date()
+                if m_service.is_same_person(client, f_person_info):
 
-                if dob == birthdate:
+                    number_of_clients_processed += 1 # пользователь совпал, записываем как успешного чтобы выйти когда будет более нужного нам количества
 
                     case_num = ""
                     messages = await f_service.get_messages(f_person["id"])
+
                     for message in messages:
 
                         message_info = await f_service.get_message(message["id"])
+                        # todo message_service.create()
                         case_num = message_info["case_num"]
-                        print(case_num)
 
                         if "lots" in message_info:
                             for lot in message_info["lots"]:
                                 lot["message_id"] = message["id"]
+                                # todo lot_service.create()
 
 
-                    tz = timezone(timedelta(hours=3))
-                    now = datetime.now(tz)
-
-                    contact = await b_service.send_request(
-                        "crm.contact.update",
-                        json={
-                            "id": client["ID"],
-                            "fields": {
-                                "UF_CRM_FEDRESURS_CHECKUP_DATETIME": now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat(), #
-                                "UF_CRM_FEDRESURS_IP": case_num, # номер дела о банкротстве
-                                "UF_CRM_FEDRESURS_INFO": len(messages), # количество сообщений
-                            }
-                        }
-                    )
-                    print(len(messages), case_num, now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat())
-                    print(contact)
+                    contact = await c_service.update_contact(client["ID"], case_num, len(messages))
 
 
     finally:
@@ -109,10 +80,10 @@ if __name__ == "__main__":
         asyncio.run(
             main(count_clients)
         )
+    elif 1 > int(count_clients) > 50:
+        print(f"Некорректное количество персон: {count_clients}")
     elif int(count_clients) <= 50:
         asyncio.run(
             main(int(count_clients))
         )
-    elif int(count_clients) > 50:
-        print("более 50 обрабатываемых персон")
 
