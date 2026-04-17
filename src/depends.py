@@ -33,5 +33,12 @@ def get_message_service(
         http_session
     )
 
+def get_lot_service(
+        http_session: ClientSession
+) -> bitrix.BitrixLotService:
+    return bitrix.BitrixLotService(
+        http_session
+    )
+
 def get_matching_service() -> MatchingService:
     return MatchingService()

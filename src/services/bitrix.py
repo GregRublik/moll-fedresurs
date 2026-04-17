@@ -36,6 +36,31 @@ class BitrixService:
 
         return await response.json()
 
+class BitrixLotService(BitrixService):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.entity_type_id = settings.bitrix.id_sp_lot
+
+    async def create_message(self, client_id: int, lot: dict):
+        response = await self.send_request(
+            "crm.item.add",
+            json={
+                "entityTypeId": self.entity_type_id,
+                "fields": {
+                    "title": f"{lot.get('num')} {lot.get('type')}",
+                    "contactId": client_id,
+                    "ufCrm148_1758037968": lot.get("description"),
+                    "ufCrm148_1758037977": lot.get("type"),
+                    "ufCrm148_1758037984": lot.get("start_price"),
+                    "ufCrm148_1758037994": lot.get("step"),
+                    "ufCrm148_1758038013": lot.get("deposit"),
+                }
+            }
+        )
+        return response["result"]
+
+
 class BitrixMessageService(BitrixService):
 
     def __init__(self, *args, **kwargs):

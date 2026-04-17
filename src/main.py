@@ -3,7 +3,7 @@ import asyncio
 
 
 from config import SessionManager
-from services.bitrix import BitrixService, BitrixContactsService, BitrixMessageService
+from services.bitrix import BitrixService, BitrixContactsService, BitrixMessageService, BitrixLotService
 from services.fedresurs import FedresursService
 
 from depends import (
@@ -11,7 +11,8 @@ from depends import (
     get_fedresurs_service,
     get_bitrix_contact_service,
     get_matching_service,
-    get_message_service
+    get_message_service,
+    get_lot_service
 )
 from services.matching import MatchingService
 
@@ -26,6 +27,7 @@ async def main(count):
         b_service: BitrixService = get_bitrix_service(session)
         m_service: MatchingService = get_matching_service()
         message_service: BitrixMessageService = get_message_service(session)
+        lot_service: BitrixLotService = get_lot_service(session)
 
         # mes = await message_service.get_message(2)
         # print(mes)
@@ -64,13 +66,13 @@ async def main(count):
                         # print(message_info)
 
                         b_message = await message_service.create_message(client["ID"], message_info)
-                        # print(f"id сообщения: {b_message['item']['id']}")
+                        print(f"создано сообщение: https://b24test.lot4rent.ru/crm/type/1078/details/{b_message['item']['id']}/")
 
                         if "lots" in message_info:
                             for lot in message_info["lots"]:
-                                print(f"lot: {lot}")
-                                lot["message_id"] = message["id"]
-                                # todo lot_service.create()
+
+                                b_lot = await lot_service.create_lot(client["ID"], lot)
+                                print(f"создан лот: https://b24test.lot4rent.ru/crm/type/1120/details/{b_lot['item']['id']}/")
 
                     # contact = await c_service.update_contact(client["ID"], case_num, len(messages))
 

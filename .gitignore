@@ -12,3 +12,5 @@ wheels/
 .idea
 .DS_Store
 tester.py
+api_docs.txt
+test_input.txt
