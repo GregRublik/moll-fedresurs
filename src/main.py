@@ -16,6 +16,7 @@ from depends import (
 )
 from services.matching import MatchingService
 
+created_messages, created_lots, updated_contact = [], [], []
 
 async def main(count):
     print(f"Количество клиентов: ", count)
@@ -58,7 +59,6 @@ async def main(count):
 
                     case_num = ""
                     messages = await f_service.get_messages(f_person["id"])
-                    print(messages, "\n")
 
                     for message in messages:
 
@@ -67,14 +67,17 @@ async def main(count):
 
                         b_message = await message_service.create_message(client["ID"], message_info)
                         print(f"создано сообщение: https://b24test.lot4rent.ru/crm/type/1078/details/{b_message['item']['id']}/")
+                        created_messages.append(b_message['item']['id'])
 
                         if "lots" in message_info:
                             for lot in message_info["lots"]:
 
                                 b_lot = await lot_service.create_lot(client["ID"], lot)
                                 print(f"создан лот: https://b24test.lot4rent.ru/crm/type/1120/details/{b_lot['item']['id']}/")
+                                created_lots.append(b_lot['item']['id'])
 
-                    # contact = await c_service.update_contact(client["ID"], case_num, len(messages))
+                    contact = await c_service.update_contact(client["ID"], case_num, len(messages))
+                    updated_contact.append(client["ID"])
 
 
     finally:
@@ -94,4 +97,6 @@ if __name__ == "__main__":
         asyncio.run(
             main(int(count_clients))
         )
+
+    print(f"созданные сообщения: {created_messages} \n lots: {created_lots}, \n updated contacts: {updated_contact}")
 
