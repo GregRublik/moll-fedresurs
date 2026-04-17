@@ -27,12 +27,15 @@ async def main(count):
         m_service: MatchingService = get_matching_service()
         message_service: BitrixMessageService = get_message_service(session)
 
+        # mes = await message_service.get_message(2)
+        # print(mes)
+
         clients = await c_service.get_contacts() # получаем 50 первых контактов
 
         number_of_clients_processed = 0
 
         for client in clients[:count]:
-            print(client)
+            # print(client)
 
             if number_of_clients_processed == count:
                 break
@@ -53,20 +56,23 @@ async def main(count):
 
                     case_num = ""
                     messages = await f_service.get_messages(f_person["id"])
+                    print(messages, "\n")
 
                     for message in messages:
 
                         message_info = await f_service.get_message(message["id"])
-                        # todo message_service.create()
-                        case_num = message_info["case_num"]
+                        # print(message_info)
+
+                        b_message = await message_service.create_message(client["ID"], message_info)
+                        # print(f"id сообщения: {b_message['item']['id']}")
 
                         if "lots" in message_info:
                             for lot in message_info["lots"]:
+                                print(f"lot: {lot}")
                                 lot["message_id"] = message["id"]
                                 # todo lot_service.create()
 
-
-                    contact = await c_service.update_contact(client["ID"], case_num, len(messages))
+                    # contact = await c_service.update_contact(client["ID"], case_num, len(messages))
 
 
     finally:

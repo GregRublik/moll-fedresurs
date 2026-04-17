@@ -49,15 +49,17 @@ class BitrixMessageService(BitrixService):
             json={
                 "entityTypeId": self.entity_type_id,
                 "fields": {
-                    # todo client
-                    "UF_CRM_138_1744310823": message.get(""), # тип сообщения
-                    "UF_CRM_138_1744310803": message.get(""), # дата
-                    "UF_CRM_138_1744310779": message.get(""), # номер
-                    "UF_CRM_138_1744310786": message.get(""), # url
-                    "UF_CRM_138_1744310814": message.get("")# текст сообщения
+                    "title": f"{message.get('num')} {message.get('type')}",
+                    "contactId": client_id,
+                    "ufCrm138_1744310823": message.get("type"), # тип сообщения
+                    "ufCrm138_1744310803": message.get("date_published"), # дата
+                    "ufCrm138_1744310779": message.get("num"), # номер
+                    "ufCrm138_1744310786": f"https://fedresurs.ru/bankruptmessages/{message.get("id")}", # url a412e48d-5b84-4bf9-8bde-6236093ad886
+                    "ufCrm138_1744310814": message.get("text")# текст сообщения
                 }
             }
         )
+        return response["result"]
 
     async def get_message(self, message_id: int):
         print(self.entity_type_id)
@@ -118,7 +120,7 @@ class BitrixContactsService(BitrixService):
                     "BIRTHDATE",
                 ],
                 "filter": {
-                    # "ID": "18609",
+                    "ID": "18609",
                     "UF_CRM_FEDRESURS_MONITORING": "1", # мониторинг в федресурсе
                     "!=NAME": "",               # только с заполненными колями
                     "!=SECOND_NAME": "",        # только с заполненными колями
