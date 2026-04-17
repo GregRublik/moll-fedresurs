@@ -42,7 +42,7 @@ class BitrixLotService(BitrixService):
         super().__init__(*args, **kwargs)
         self.entity_type_id = settings.bitrix.id_sp_lot
 
-    async def create_message(self, client_id: int, lot: dict):
+    async def create_lot(self, client_id: int, lot: dict):
         response = await self.send_request(
             "crm.item.add",
             json={
