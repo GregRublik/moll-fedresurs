@@ -3,6 +3,7 @@ from typing import Literal, Optional
 from datetime import datetime, timezone, timedelta
 
 from config import settings
+from constants import BitrixLotConstants, BitrixMessageConstants, BitrixContactConstants
 
 
 class BitrixService:
@@ -38,6 +39,8 @@ class BitrixService:
 
 class BitrixLotService(BitrixService):
 
+    fields: BitrixLotConstants
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.entity_type_id = settings.bitrix.id_sp_lot
@@ -50,11 +53,13 @@ class BitrixLotService(BitrixService):
                 "fields": {
                     "title": f"{lot.get('num')} {lot.get('type')}",
                     "contactId": client_id,
-                    "ufCrm148_1758037968": lot.get("description"),
-                    "ufCrm148_1758037977": lot.get("type"),
-                    "ufCrm148_1758037984": lot.get("start_price"),
-                    "ufCrm148_1758037994": lot.get("step"),
-                    "ufCrm148_1758038013": lot.get("deposit"),
+
+                    self.fields.description: lot.get("description"),
+                    self.fields.type_lot: lot.get("type"),
+                    self.fields.start_price: lot.get("start_price"),
+                    self.fields.step: lot.get("step"),
+                    self.fields.deposit: lot.get("deposit"),
+
                 }
             }
         )
@@ -62,6 +67,8 @@ class BitrixLotService(BitrixService):
 
 
 class BitrixMessageService(BitrixService):
+
+    fields: BitrixMessageConstants
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -76,11 +83,12 @@ class BitrixMessageService(BitrixService):
                 "fields": {
                     "title": f"{message.get('num')} {message.get('type')}",
                     "contactId": client_id,
-                    "ufCrm138_1744310823": message.get("type"), # тип сообщения
-                    "ufCrm138_1744310803": message.get("date_published"), # дата
-                    "ufCrm138_1744310779": message.get("num"), # номер
-                    "ufCrm138_1744310786": f"https://fedresurs.ru/bankruptmessages/{message.get("id")}", # url a412e48d-5b84-4bf9-8bde-6236093ad886
-                    "ufCrm138_1744310814": message.get("text")# текст сообщения
+                    self.fields.type_message: message.get("type"),
+                    self.fields.date_published: message.get("date_published"),
+                    self.fields.num: message.get("num"),
+                    self.fields.url: f"https://fedresurs.ru/bankruptmessages/{message.get("id")}",
+                    self.fields.text: message.get("text"),
+
                 }
             }
         )
@@ -99,6 +107,8 @@ class BitrixMessageService(BitrixService):
         return response
 
 class BitrixContactsService(BitrixService):
+
+    fields: BitrixContactConstants
 
     async def get_fields(self):
         response = await self.send_request(
@@ -119,10 +129,10 @@ class BitrixContactsService(BitrixService):
             json={
                 "id": client_id,
                 "fields": {
-                    "UF_CRM_FEDRESURS_CHECKUP_DATETIME": now.replace(hour=0, minute=0, second=0,
-                                                                     microsecond=0).isoformat(),  #
-                    "UF_CRM_FEDRESURS_IP": num_activity,  # номер дела о банкротстве
-                    "UF_CRM_FEDRESURS_INFO": count_messages,  # количество сообщений
+                    self.fields.date_updated_fedresurs: now.replace(hour=0, minute=0, second=0,
+                                                                     microsecond=0).isoformat(),
+                    self.fields.bankruptcy_case_number: num_activity,
+                    self.fields.count_messages: count_messages,
                 }
             }
         )
@@ -137,23 +147,23 @@ class BitrixContactsService(BitrixService):
                     "NAME",
                     "SECOND_NAME",
                     "LAST_NAME",
-                    "UF_CRM_1636582822241", # INN
-                    "UF_CRM_FEDRESURS_MONITORING",
-                    "UF_CRM_FEDRESURS_CHECKUP_DATETIME",
-                    "UF_CRM_FEDRESURS_IP",  # Номер дела о банкротстве c Федресурса
-                    "UF_CRM_FEDRESURS_INFO",  # "Количество сообщений о банкротстве с Федресурса"
+                    self.fields.inn,
+                    self.fields.fedresurs_monitoring,
+                    self.fields.date_updated_fedresurs,
+                    self.fields.bankruptcy_case_number,
+                    self.fields.count_messages,
                     "BIRTHDATE",
                 ],
                 "filter": {
                     # "ID": "18609",
-                    "UF_CRM_FEDRESURS_MONITORING": "1", # мониторинг в федресурсе
+                    self.fields.fedresurs_monitoring: "1", # мониторинг в федресурсе
                     "!=NAME": "",               # только с заполненными колями
                     "!=SECOND_NAME": "",        # только с заполненными колями
                     "!=LAST_NAME": "",          # только с заполненными колями
                     "!=BIRTHDATE": ""           # только с заполненными колями
                 },
                 "order": {
-                    "UF_CRM_FEDRESURS_CHECKUP_DATETIME": "ASC",  # "ASC", "DESC"
+                    self.fields.date_updated_fedresurs: "ASC",  # "ASC", "DESC"
                     "BIRTHDATE": "DESC"
                 },
                 "start": start
