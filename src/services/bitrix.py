@@ -39,11 +39,10 @@ class BitrixService:
 
 class BitrixLotService(BitrixService):
 
-    fields: BitrixLotConstants
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.entity_type_id = settings.bitrix.id_sp_lot
+        self.fields = BitrixLotConstants()
 
     async def create_lot(self, client_id: int, lot: dict):
         response = await self.send_request(
@@ -68,11 +67,10 @@ class BitrixLotService(BitrixService):
 
 class BitrixMessageService(BitrixService):
 
-    fields: BitrixMessageConstants
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.entity_type_id = settings.bitrix.id_sp_message
+        self.fields = BitrixMessageConstants()
 
 
     async def create_message(self, client_id: int, message: dict):
@@ -108,7 +106,9 @@ class BitrixMessageService(BitrixService):
 
 class BitrixContactsService(BitrixService):
 
-    fields: BitrixContactConstants
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields = BitrixContactConstants()
 
     async def get_fields(self):
         response = await self.send_request(
