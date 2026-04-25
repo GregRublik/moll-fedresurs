@@ -16,7 +16,7 @@ from depends import (
 )
 from services.matching import MatchingService
 
-created_messages, created_lots, updated_contact = [], [], []
+created_messages, created_lots, updated_contact, processed_clients = [], [], [], []
 
 async def main(count):
     print(f"Количество клиентов: ", count)
@@ -37,8 +37,9 @@ async def main(count):
 
         number_of_clients_processed = 0
 
+
         for client in clients[:count]:
-            # print(client)
+            processed_clients.append(client["ID"])
 
             if number_of_clients_processed == count:
                 break
@@ -98,5 +99,8 @@ if __name__ == "__main__":
             main(int(count_clients))
         )
 
-    print(f"созданные сообщения: {created_messages} \n lots: {created_lots}, \n updated contacts: {updated_contact}")
+    print(f"""
+Обрабатываемые контакты: {processed_clients}\n Обновленные контакты: {updated_contact}\n 
+Созданные сообщения: {created_messages}\n Созданные лоты: {created_lots}\n 
+""")
 

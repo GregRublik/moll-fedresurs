@@ -169,5 +169,8 @@ class BitrixContactsService(BitrixService):
                 "start": start
             }
         )
-        return response["result"]
-
+        try:
+            return response["result"]
+        except KeyError:
+            print(f"error response: {response}")
+            raise
