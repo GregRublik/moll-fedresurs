@@ -49,15 +49,18 @@ async def main(count):
                 client["NAME"],
                 client["SECOND_NAME"],
             )
-            # print(f_persons)
+            print(f_persons)
+
+            is_same_person = False
+
             for f_person in f_persons:
                 f_person_info = await f_service.get_person(f_person["id"])
                 # print(f_person_info)
 
                 if m_service.is_same_person(client, f_person_info):
+                    is_same_person = True
 
-                    number_of_clients_processed += 1 # пользователь совпал, записываем как успешного чтобы выйти когда будет более нужного нам количества
-
+                    number_of_clients_processed += 1 # пользователь совпал
                     case_num = ""
                     messages = await f_service.get_messages(f_person["id"])
 
@@ -79,6 +82,12 @@ async def main(count):
 
                     contact = await c_service.update_contact(client["ID"], case_num, len(messages))
                     updated_contact.append(client["ID"])
+                    break
+
+            if not is_same_person:
+                # todo Отмечаем контакт как не найденный
+                pass
+
 
 
     finally:
