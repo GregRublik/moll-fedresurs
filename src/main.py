@@ -2,9 +2,10 @@ import asyncio
 
 
 
-from config import SessionManager
+from config import SessionManager, settings
 from services.bitrix import BitrixService, BitrixContactsService, BitrixMessageService, BitrixLotService
 from services.fedresurs import FedresursService
+from services.orchestrator import Orchestrator
 
 from depends import (
     get_bitrix_service,
@@ -40,22 +41,27 @@ async def main(count):
 
         for client in clients[:count]:
             processed_clients.append(client["ID"])
+            print(client)
 
             if number_of_clients_processed == count:
                 break
 
-            f_persons = await f_service.search_person(
-                client["LAST_NAME"],
-                client["NAME"],
-                client["SECOND_NAME"],
-            )
-            print(f_persons)
+            if client[c_service.fields.fedresurs_found] == "Да":
+                f_persons = [client[c_service.fields.info_fedresurs]] # если ранее делали по нему запрос, то берем из поля contact
+
+            else:
+                f_persons = await f_service.search_person(
+                    client["LAST_NAME"],
+                    client["NAME"],
+                    client["SECOND_NAME"],
+                )
 
             is_same_person = False
+            # print(f_persons)
 
             for f_person in f_persons:
                 f_person_info = await f_service.get_person(f_person["id"])
-                # print(f_person_info)
+                print(f_person_info)
 
                 if m_service.is_same_person(client, f_person_info):
                     is_same_person = True
@@ -70,23 +76,25 @@ async def main(count):
                         # print(message_info)
 
                         b_message = await message_service.create_message(client["ID"], message_info)
-                        print(f"создано сообщение: https://b24test.lot4rent.ru/crm/type/1078/details/{b_message['item']['id']}/")
+                        print(f"NEW MESS: {settings.bitrix.url}/crm/type/{settings.bitrix.id_sp_message}/details/{b_message['item']['id']}/")
                         created_messages.append(b_message['item']['id'])
 
                         if "lots" in message_info:
                             for lot in message_info["lots"]:
 
                                 b_lot = await lot_service.create_lot(client["ID"], lot)
-                                print(f"создан лот: https://b24test.lot4rent.ru/crm/type/1120/details/{b_lot['item']['id']}/")
+                                print(f"NEW LOT: {settings.bitrix.url}/crm/type/{settings.bitrix.id_sp_lot}/details/{b_lot['item']['id']}/")
                                 created_lots.append(b_lot['item']['id'])
 
-                    contact = await c_service.update_contact(client["ID"], case_num, len(messages))
+                    # todo Отмечаем что контакт найден (проверить), нужно также добавить сохранение кэшированной инфы (проверить)
+                    await c_service.contact_found(client["ID"], message_info["case_num"], len(messages), f_person_info)
+
                     updated_contact.append(client["ID"])
-                    break
+                break
 
             if not is_same_person:
-                # todo Отмечаем контакт как не найденный
-                pass
+                # todo Отмечаем контакт как не найденный (Надо проверить)
+                await c_service.contact_not_found(client["ID"])
 
 
 

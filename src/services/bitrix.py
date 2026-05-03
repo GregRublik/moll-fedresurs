@@ -4,11 +4,15 @@ from datetime import datetime, timezone, timedelta
 
 from config import settings
 from constants import BitrixLotConstants, BitrixMessageConstants, BitrixContactConstants
+from config import SessionManager
 
 
 class BitrixService:
 
-    def __init__(self, http_session: ClientSession):
+    def __init__(
+            self,
+            http_session: ClientSession = SessionManager.get_session(),
+    ):
         self.http_session = http_session
 
     async def _request(self, method, url, params, json):
@@ -79,6 +83,7 @@ class BitrixMessageService(BitrixService):
             json={
                 "entityTypeId": self.entity_type_id,
                 "fields": {
+                    "id": message.get("id"), # надо проверить будет ли создаваться сообщение с таким id
                     "title": f"{message.get('num')} {message.get('type')}",
                     "contactId": client_id,
                     self.fields.type_message: message.get("type"),
@@ -119,8 +124,21 @@ class BitrixContactsService(BitrixService):
         )
         return response
 
-    async def update_contact(self, client_id: int, num_activity: str, count_messages: int, ):
+    async def contact_not_found(self, client_id: int, ):
+        """Отмечаем что не найден на федресурсе"""
+        response = await self.send_request(
+            "crm.contact.update",
+            json={
+                "id": client_id,
+                "fields": {
+                    self.fields.fedresurs_found: self.fields.fedresurs_found_status_no
+                }
+            }
+        )
+        return response
 
+    async def contact_found(self, client_id: int, num_activity: str, count_messages: int, info_person: dict):
+        """Когда нашли на федресурсе отмечаем как найденый"""
         tz = timezone(timedelta(hours=3))
         now = datetime.now(tz)
 
@@ -129,10 +147,12 @@ class BitrixContactsService(BitrixService):
             json={
                 "id": client_id,
                 "fields": {
+                    self.fields.fedresurs_found: self.fields.fedresurs_found_status_yes,
                     self.fields.date_updated_fedresurs: now.replace(hour=0, minute=0, second=0,
                                                                      microsecond=0).isoformat(),
                     self.fields.bankruptcy_case_number: num_activity,
                     self.fields.count_messages: count_messages,
+                    self.fields.info_fedresurs: info_person
                 }
             }
         )
@@ -152,11 +172,14 @@ class BitrixContactsService(BitrixService):
                     self.fields.date_updated_fedresurs,
                     self.fields.bankruptcy_case_number,
                     self.fields.count_messages,
+                    self.fields.info_fedresurs,
+                    self.fields.fedresurs_found,
                     "BIRTHDATE",
                 ],
                 "filter": {
-                    # "ID": "18609",
+                    "ID": "18609",
                     self.fields.fedresurs_monitoring: "1", # мониторинг в федресурсе
+                    # f"={self.fields.fedresurs_found}": "", # Только необработанные ранее
                     "!=NAME": "",               # только с заполненными колями
                     "!=SECOND_NAME": "",        # только с заполненными колями
                     "!=LAST_NAME": "",          # только с заполненными колями

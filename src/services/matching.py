@@ -1,9 +1,13 @@
 from datetime import datetime
+from constants import BitrixContactConstants
 
 class MatchingService:
 
-    @staticmethod
-    def is_same_person(client: dict, f_person_info: dict) -> bool:
+    def __init__(self):
+        self.fields: BitrixContactConstants = BitrixContactConstants()
+
+
+    def is_same_person(self, client: dict, f_person_info: dict) -> bool:
         """
         Проверяет, является ли человек из Fedresurs тем же, что и клиент в Bitrix.
         Приоритет:
@@ -13,11 +17,12 @@ class MatchingService:
         """
 
         # 1. Проверка по ИНН (если есть)
-        client_inn = client.get("UF_CRM_1636582822241") # поле INN
+        client_inn = client.get(self.fields.inn) # поле INN
         person_inn = f_person_info.get("inn")
 
         if client_inn and person_inn:
-            return client_inn == person_inn
+            if client_inn == person_inn:
+                return True
 
         # 2. Проверка по дате рождения
         client_birthdate = client.get("BIRTHDATE")

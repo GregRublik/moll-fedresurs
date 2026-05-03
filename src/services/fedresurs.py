@@ -1,11 +1,16 @@
 from aiohttp import ClientSession
-from config import settings
+from config import settings, SessionManager
 from asyncio import sleep
+
 
 
 class FedresursService:
 
-    def __init__(self, api_url, http_session: ClientSession):
+    def __init__(
+            self,
+            http_session: ClientSession,
+            api_url: str = settings.fedresurs.api_url,
+    ):
         self.api_url = api_url
         self.api_key = settings.fedresurs.api_key
         self.http_session = http_session
