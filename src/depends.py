@@ -15,8 +15,8 @@ def get_fedresurs_service(
     http_session: ClientSession
 ) -> fedresurs.FedresursService:
     return fedresurs.FedresursService(
+        http_session,
         settings.fedresurs.api_url,
-        http_session
     )
 
 def get_bitrix_contact_service(

@@ -174,6 +174,8 @@ class BitrixContactsService(BitrixService):
                     self.fields.count_messages,
                     self.fields.info_fedresurs,
                     self.fields.fedresurs_found,
+                    self.fields.find_fedresurs,
+                    self.fields.messages_fedresurs,
                     "BIRTHDATE",
                 ],
                 "filter": {
