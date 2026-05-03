@@ -91,6 +91,7 @@ class BitrixMessageService(BitrixService):
                     self.fields.num: message.get("num"),
                     self.fields.url: f"https://fedresurs.ru/bankruptmessages/{message.get("id")}",
                     self.fields.text: message.get("text"),
+                    self.fields.cache: message
 
                 }
             }
@@ -137,7 +138,15 @@ class BitrixContactsService(BitrixService):
         )
         return response
 
-    async def contact_found(self, client_id: int, num_activity: str, count_messages: int, info_person: dict):
+    async def contact_found(
+            self,
+            client_id: int,
+            num_activity: str,
+            count_messages: int,
+            info_person: dict,
+            search_info: dict,
+            search_messages: dict
+    ):
         """Когда нашли на федресурсе отмечаем как найденый"""
         tz = timezone(timedelta(hours=3))
         now = datetime.now(tz)
@@ -152,7 +161,11 @@ class BitrixContactsService(BitrixService):
                                                                      microsecond=0).isoformat(),
                     self.fields.bankruptcy_case_number: num_activity,
                     self.fields.count_messages: count_messages,
-                    self.fields.info_fedresurs: info_person
+                    self.fields.info_fedresurs: info_person,
+
+                    self.fields.find_fedresurs: search_info,
+                    self.fields.messages_fedresurs: search_messages
+
                 }
             }
         )

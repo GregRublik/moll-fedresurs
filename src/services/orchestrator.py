@@ -40,7 +40,7 @@ class Orchestrator:
 
         if cashed:
             person_info = self.str_to_dict(client[self.contact_service.fields.info_fedresurs]) # берем данные из кэша
-            await self.handle_matched_person(client, person_info, cashed)
+            await self.handle_matched_person(client, person_info, cashed, persons)
             return
 
         else:
@@ -48,22 +48,29 @@ class Orchestrator:
                 if self.matching_service.is_same_person(client, person):
                     person_info = await self.fedresurs_service.get_person(person["id"]) # ищем новые данные
                     person_info["id"] = person["id"] # добавляем так как в get_person по id он не возвращается
-                    await self.handle_matched_person(client, person_info)
+                    await self.handle_matched_person(client, person_info, cashed, persons)
                     return
 
             await self.contact_service.contact_not_found(client["ID"]) # отмечаем что контакт не найден на fedresurs
 
-    async def handle_matched_person(self, client, person, cached: bool = False):
+    async def handle_matched_person(self, client, person_info, cached: bool = False, search_info: dict = None) -> None:
         if cached:
             messages = self.str_to_dict(client[self.contact_service.fields.messages_fedresurs])
         else:
-            messages = await self.fedresurs_service.get_messages(person["id"])
+            messages = await self.fedresurs_service.get_messages(person_info["id"])
 
         case_num = "" # номер дела о банкротстве (по умолчанию нет)
         for message in messages:
-            case_num = await self.process_message(client, person, message, cached) # в некоторых сообщениях он есть, по этому мы берем его из них
+            case_num = await self.process_message(client, person_info, message, cached) # в некоторых сообщениях он есть, по этому мы берем его из них
 
-        await self.contact_service.contact_found(client["ID"], case_num, len(messages), person) # отмечаем что нашли на fedresurs и заполнили карточки сообщений и лотов
+        await self.contact_service.contact_found(
+            client_id=client["ID"],
+            num_activity=case_num,
+            count_messages=len(messages),
+            info_person=person_info, # нужно сохранить инфу о персоне person
+            search_info=search_info, # нужно сохранить инфу поиска персоны
+            search_messages=messages # нужно сохранить инфу о сообщениях messages
+        ) # отмечаем что нашли на fedresurs и заполнили карточки сообщений и лотов
 
     async def process_message(self, client, person, message, cashed: bool = False) -> str:
 
