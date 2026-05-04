@@ -75,7 +75,7 @@ class Orchestrator:
     async def process_message(self, client, person, message, cashed: bool = False) -> str:
 
         if cashed:
-            message_bitrix = await self.message_service.get_message(message["id"]) # берем из битрикса
+            message_bitrix = await self.message_service.get_message_by_fedresurs_id(message["id"]) # берем из битрикса
             message_info = self.str_to_dict(message_bitrix[self.message_service.fields.cache])
         else:
             message_info = await self.fedresurs_service.get_message(message["id"]) # берем из федресурса
@@ -86,7 +86,9 @@ class Orchestrator:
         for lot in message_info.get("lots", []):
             if message_info["case_num"] != "":
                 case_num = message_info["case_num"]
-            await self.lot_service.create_lot(client["ID"], lot)
+
+            if True: # todo нужно проверять существует ли такой лот, и если нет то создавать
+                await self.lot_service.create_lot(client["ID"], lot)
 
         return case_num
 

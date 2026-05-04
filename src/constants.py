@@ -11,8 +11,9 @@ class BitrixMessageConstants:
     num = "ufCrm138_1744310779"
     url = "ufCrm138_1744310786"
     text = "ufCrm138_1744310814"
+    id_fedresurs = "ufCrm145_1777874302"
 
-    cache = "ufCrm138_1777789355" # сюда кладу кэш во время создания сообщения в битрикс
+    cache = "ufCrm145_1777789355" # сюда кладу кэш во время создания сообщения в битрикс
 
 class BitrixContactConstants:
     date_updated_fedresurs = "UF_CRM_FEDRESURS_CHECKUP_DATETIME"    # дата обновления федресурс

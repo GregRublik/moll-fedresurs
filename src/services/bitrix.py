@@ -83,7 +83,7 @@ class BitrixMessageService(BitrixService):
             json={
                 "entityTypeId": self.entity_type_id,
                 "fields": {
-                    "id": message.get("id"), # надо проверить будет ли создаваться сообщение с таким id
+                    self.fields.id_fedresurs: message.get("id"), # надо проверить будет ли создаваться сообщение с таким id
                     "title": f"{message.get('num')} {message.get('type')}",
                     "contactId": client_id,
                     self.fields.type_message: message.get("type"),
@@ -91,14 +91,14 @@ class BitrixMessageService(BitrixService):
                     self.fields.num: message.get("num"),
                     self.fields.url: f"https://fedresurs.ru/bankruptmessages/{message.get("id")}",
                     self.fields.text: message.get("text"),
-                    self.fields.cache: message
+                    self.fields.cache: str(message)
 
                 }
             }
         )
         return response["result"]
 
-    async def get_message(self, message_id: int):
+    async def get_message_by_id(self, message_id: int):
         print(self.entity_type_id)
         response = await self.send_request(
             "crm.item.get",
@@ -109,6 +109,20 @@ class BitrixMessageService(BitrixService):
             }
         )
         return response
+
+    async def get_message_by_fedresurs_id(self, fedresurs_id: int):
+        response = await self.send_request(
+            "crm.item.list",
+            json={
+                "entityTypeId": self.entity_type_id,
+                "filter": {
+                    self.fields.id_fedresurs: fedresurs_id
+                }
+            }
+        )
+        print(response)
+        return response["result"]["items"][0]
+
 
 class BitrixContactsService(BitrixService):
 
@@ -161,10 +175,10 @@ class BitrixContactsService(BitrixService):
                                                                      microsecond=0).isoformat(),
                     self.fields.bankruptcy_case_number: num_activity,
                     self.fields.count_messages: count_messages,
-                    self.fields.info_fedresurs: info_person,
+                    self.fields.info_fedresurs: str(info_person),
 
-                    self.fields.find_fedresurs: search_info,
-                    self.fields.messages_fedresurs: search_messages
+                    self.fields.find_fedresurs: str(search_info),
+                    self.fields.messages_fedresurs: str(search_messages)
 
                 }
             }
